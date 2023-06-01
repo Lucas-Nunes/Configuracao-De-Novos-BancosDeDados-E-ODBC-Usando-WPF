@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<ApplicationIcon>Rnv_Ico.ico</ApplicationIcon>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="9.1.1" />
+	</ItemGroup>
+
+</Project>
