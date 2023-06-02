@@ -410,6 +410,36 @@ namespace TelaMain
 
         }
 
+        private int CheckBancoUni(string NameDoBanco) 
+        {
+            string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
+            string DiretorioRaizRenovar = Path.Combine(DiretorioDeExecuçãoDados, "..");
+            string PatasDados = Path.Combine(DiretorioRaizRenovar, "dados");
+            string CaminhoDoArquivoDoBanco = Path.Combine(PatasDados, NameDoBanco);
+
+            string connectionString = "User=SYSDBA;Password=masterkey;Database=" + CaminhoDoArquivoDoBanco + "\\DADOS.fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;";
+            string query = "SELECT COUNT(distinct codemp) FROM produtos;";
+            int Result = 0;
+
+            using (FbConnection connection = new FbConnection(connectionString))
+            {
+                connection.Open();
+                using (FbCommand command = new FbCommand(query, connection)) 
+                {
+                    using (FbDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Result = reader.GetInt32(0);
+                        }
+                    }
+                }
+                connection.Close();
+            }
+            return Result;
+
+        }
+
         private string PegaVersao(string NameDoBanco)
         {
             string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
@@ -496,10 +526,13 @@ namespace TelaMain
         private void Criarini(object sender, EventArgs e)
         {
             RadioButton radioButtonBancos = (RadioButton)sender;           
-            MessageBoxResult resultado = MessageBox.Show("O Banco é unificado?", "Caixa de Diálogo", MessageBoxButton.YesNo);
             int uniBanco = 0;
-            if (resultado == MessageBoxResult.Yes) { uniBanco = 1; }
-            else if (resultado == MessageBoxResult.No) { uniBanco = 0; }
+
+            int uniBancoCheck = CheckBancoUni((string)radioButtonBancos.Content);
+
+            if (uniBancoCheck > 1) { uniBanco = 1; }
+            else { uniBanco = 0; }
+
             string DiretorioDeExecução = Directory.GetCurrentDirectory();
             string diretorioPai = Path.Combine(DiretorioDeExecução, "..");
             string pastaProcurada = Path.Combine(diretorioPai, "dados");
