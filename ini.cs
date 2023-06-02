@@ -20,6 +20,7 @@ namespace TelaMain
     public partial class MainWindow : Window
     {
         private int StatusCheckBox;
+        private int StatusCheckBox2;
         public MainWindow()
         {
             InitializeComponent();
@@ -376,6 +377,7 @@ namespace TelaMain
                     processo.WaitForExit();
                 }
                 MessageBox.Show("Banco Configurado com Sucesso!");
+                StatusCheckBox2 = 0;
                 canvas2.Children.Clear();
                 BancosTelaInicial();
             }
@@ -672,6 +674,11 @@ EMPRESA=1";
                     return;
                 }
                 Criarini(sender, e);
+
+                string versaoDP = PegaVersaoDP();
+                string VersaoBanco = PegaVersao((string)RadioButtonBanco.Content);
+                if (versaoDP != VersaoBanco) { StatusCheckBox2 = 1;}
+
                 try
                 {
                     foreach (string arquivos in arquivosFiltrados)
@@ -709,7 +716,7 @@ EMPRESA=1";
                             dsnKey.Close();
                         }
                     }
-                    if (StatusCheckBox == 1) { CheckAtualizador(); }
+                    if (StatusCheckBox == 1 || StatusCheckBox2 == 1) { CheckAtualizador(); }
                     else
                     { 
                         MessageBox.Show("Banco Configurado com Sucesso!");
