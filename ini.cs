@@ -419,25 +419,51 @@ namespace TelaMain
 
             string connectionString = "User=SYSDBA;Password=masterkey;Database=" + CaminhoDoArquivoDoBanco + "\\DADOS.fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;";
             string query = "SELECT COUNT(distinct codemp) FROM produtos;";
+            string query2 = "SELECT COUNT(distinct codemp) FROM pessoa;";
             int Result = 0;
-
-            using (FbConnection connection = new FbConnection(connectionString))
+            int Result2 = 0;
+            int ResultFinal = 0;
+            try
             {
-                connection.Open();
-                using (FbCommand command = new FbCommand(query, connection)) 
+                using (FbConnection connection = new FbConnection(connectionString))
                 {
-                    using (FbDataReader reader = command.ExecuteReader())
+                    connection.Open();
+                    using (FbCommand command = new FbCommand(query, connection))
                     {
-                        while (reader.Read())
+                        using (FbDataReader reader = command.ExecuteReader())
                         {
-                            Result = reader.GetInt32(0);
+                            while (reader.Read())
+                            {
+                                Result = reader.GetInt32(0);
+                            }
+                        }
+                    }
+                    connection.Close();
+                }
+            }catch { MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado."); }
+            try 
+            {
+                using (FbConnection connection = new FbConnection(connectionString))
+                {
+                    connection.Open();
+                    using (FbCommand command = new FbCommand(query2, connection))
+                    {
+                        using (FbDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                Result2 = reader.GetInt32(0);
+                            }
                         }
                     }
                 }
-                connection.Close();
             }
-            return Result;
+            catch { MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado."); }
+            if (Result > 1) { ResultFinal = 2;}
+            else if (Result2 > 1) { ResultFinal = 2; }
+            else { ResultFinal = 1; }
 
+            return ResultFinal;
         }
 
         private string PegaVersao(string NameDoBanco)
@@ -523,6 +549,84 @@ namespace TelaMain
             return cnpjResult;
         }
 
+        private List<string> PegaDadosUniBanco(object sender, EventArgs e)
+        {
+            List<string> ListaUniDados = new List<string>();
+            try
+            {
+                RadioButton radioButtonBancos = (RadioButton)sender;
+                string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
+                string diretorioPaiDados = Path.Combine(DiretorioDeExecuçãoDados, "..");
+                string pastaDados = Path.Combine(diretorioPaiDados, "dados");
+                string pastaComBanco = Path.Combine(pastaDados, (string)radioButtonBancos.Content);
+                string[] arquivos = Directory.GetFiles(pastaComBanco, "*DADOS*").Where(arquivo => !Path.GetFileName(arquivo).Contains("DADOSEMP")).ToArray();
+                int rest = 1;
+                int ResultFinal;
+                string connectionString = "";
+                foreach (string arquivo in arquivos)
+                {
+                    if (rest == 1) { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS.fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                    else { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS0" + rest + ".fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                    string query = "SELECT COUNT(distinct codemp) FROM pessoa;";
+                    int Result = 0;
+                    try
+                    {
+                        using (FbConnection connection = new FbConnection(connectionString))
+                        {
+                            connection.Open();
+                            using (FbCommand command = new FbCommand(query, connection))
+                            {
+                                using (FbDataReader reader = command.ExecuteReader())
+                                {
+                                    while (reader.Read())
+                                    {
+                                        Result = reader.GetInt32(0);
+                                    }
+                                }
+                            }
+                            connection.Close();
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :01: "+ ex);
+                        return ListaUniDados;
+                    }
+                    if (Result > 1) { ResultFinal = 2; }
+                    else { ResultFinal = 1; }
+
+                    if (ResultFinal == 1) 
+                    {
+                        if(rest != 1) 
+                        {
+                            ListaUniDados.Add("0"+ rest);
+                        }else 
+                        {
+                            for (int i = 0; i < Result; i++)
+                            {
+                                ListaUniDados.Add("");
+                            }
+                        }
+                    }else
+                    {
+                        for (int i = 0; i < Result; i++)
+                        {
+                            if (rest == 1) { ListaUniDados.Add(""); }
+                            else { ListaUniDados.Add("0" + rest); }
+                        }
+                    }
+                    rest++;
+
+                }
+            }
+            catch 
+            {
+                MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :03");
+                return ListaUniDados; 
+            }
+            return ListaUniDados;
+        }
+
         private void Criarini(object sender, EventArgs e)
         {
             RadioButton radioButtonBancos = (RadioButton)sender;           
@@ -541,20 +645,13 @@ namespace TelaMain
             string NomeDoArquivo = "renovar.ini";
             string caminhoCompleto = Path.Combine(pastaDestino, NomeDoArquivo);
             List<string> cnpjResult = PegaCNPJ(sender, e);
-            List<string> DadosUni = new List<string>();
+            List<string> DadosUni = PegaDadosUniBanco(sender, e);
 
             for (int i = 0; i < 10; i++)
             {
-                if (i != 0)
+                if (i >= DadosUni.Count)
                 {
-                    if (uniBanco == 0)
-                    {
-                        DadosUni.Add("0" + (i + 1));
-                    }
-                    else
-                    {
-                        DadosUni.Add("");
-                    }
+                    DadosUni.Add("sem Dados1");
                 }
                 else
                 {
