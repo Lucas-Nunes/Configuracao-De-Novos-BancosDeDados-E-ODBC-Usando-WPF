@@ -21,6 +21,7 @@ namespace TelaMain
     {
         private int StatusCheckBox;
         private int StatusCheckBox2;
+        private int uniBanco = 0;
         public MainWindow()
         {
             InitializeComponent();
@@ -609,6 +610,7 @@ namespace TelaMain
                         }
                     }else
                     {
+                        uniBanco = 1;
                         for (int i = 0; i < Result; i++)
                         {
                             if (rest == 1) { ListaUniDados.Add(""); }
@@ -630,7 +632,6 @@ namespace TelaMain
         private void Criarini(object sender, EventArgs e)
         {
             RadioButton radioButtonBancos = (RadioButton)sender;           
-            int uniBanco = 0;
 
             int uniBancoCheck = CheckBancoUni((string)radioButtonBancos.Content);
 
@@ -686,19 +687,19 @@ DADOS03=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + Dad
 DADOS04=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[3] + ".fdb" + @"
 DADOS05=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[4] + ".fdb" + @"
 DADOS06=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb" + @"
-DADOS07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb" + @"
-DADOS08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb" + @"
-DADOS09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb" + @"
+DADOS07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[6] + ".fdb" + @"
+DADOS08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[7] + ".fdb" + @"
+DADOS09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[8] + ".fdb" + @"
 DADOSEMP=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\DadosEmp.fdb
 DADOSREDE01=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados.fdb
-DADOSREDE02=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados02.fdb
-DADOSREDE03=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados03.fdb
-DADOSREDE04=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados04.fdb
-DADOSREDE05=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados05.fdb
-DADOSREDE06=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados06.fdb
-DADOSREDE07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados07.fdb
-DADOSREDE08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados08.fdb
-DADOSREDE09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados09.fdb
+DADOSREDE02=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[1] + ".fdb" + @"
+DADOSREDE03=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[2] + ".fdb" + @"
+DADOSREDE04=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[3] + ".fdb" + @"
+DADOSREDE05=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[4] + ".fdb" + @"
+DADOSREDE06=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb" + @"
+DADOSREDE07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[6] + ".fdb" + @"
+DADOSREDE08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[7] + ".fdb" + @"
+DADOSREDE09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[8] + ".fdb" + @"
 DADOSREDEEMP=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\DadosEmp.fdb
 DADOSLOG=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Log.fdb
 DADOSREDELOG=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Log.fdb
