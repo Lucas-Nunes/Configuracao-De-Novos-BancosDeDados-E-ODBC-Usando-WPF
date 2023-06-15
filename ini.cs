@@ -19,7 +19,7 @@ namespace TelaMain
 {
     public partial class MainWindow : Window
     {
-        private int StatusCheckBox;
+        private int AutoAtualizador;
         private int StatusCheckBox2;
         private int uniBanco = 0;
         public MainWindow()
@@ -44,7 +44,7 @@ namespace TelaMain
         {
             ResizeMode = ResizeMode.NoResize;
             MaxWidth = 1200;
-            MaxHeight = 650; 
+            MaxHeight = 650;
         }
 
         private void MeuComponentes()
@@ -94,18 +94,19 @@ namespace TelaMain
             canvas3.Children.Add(desc1text);
             CheckBox checkboxatualizador = new CheckBox();
             checkboxatualizador.Background = Brushes.White;
-            checkboxatualizador.Content = "Atualizador de Banco";
+            checkboxatualizador.Content = "Atualizador de Banco Automático";
             checkboxatualizador.Width = 230;
             checkboxatualizador.Foreground = Brushes.Black;
             checkboxatualizador.FontWeight = FontWeights.Bold;
             checkboxatualizador.Checked += Atualizador_CheckedChanged;
             checkboxatualizador.Unchecked += Atualizador_CheckedChanged;
+            checkboxatualizador.IsChecked = true;
             Canvas.SetLeft(checkboxatualizador, 500);
             Canvas.SetTop(checkboxatualizador, 72);
 
             Shapes.Rectangle descAt = new Shapes.Rectangle();
             descAt.Fill = Brushes.White;
-            descAt.Width = 150;
+            descAt.Width = 220;//150
             descAt.Height = 20;
             Canvas.SetLeft(descAt, 500);
             Canvas.SetTop(descAt, 70);
@@ -142,7 +143,7 @@ namespace TelaMain
         {
             string texto = canvas1.Children.OfType<TextBox>().FirstOrDefault()?.Text;
 
-            if (string.IsNullOrEmpty(texto)) 
+            if (string.IsNullOrEmpty(texto))
             {
                 SearchTextBox_TextChanged(sender, new RoutedEventArgs());
             }
@@ -157,7 +158,7 @@ namespace TelaMain
         }
 
 
-        private void paginas() 
+        private void paginas()
         {
             Button ButtonProxima = new Button();
             ButtonProxima.Background = Brushes.White;
@@ -208,7 +209,7 @@ namespace TelaMain
             }
         }
 
-        private void BancosTelaInicial() 
+        private void BancosTelaInicial()
         {
             string DiretorioDeExecução = Directory.GetCurrentDirectory();
             string DiretorioRaiz = Path.Combine(DiretorioDeExecução, "..");
@@ -266,7 +267,7 @@ namespace TelaMain
 
                 Canvas.SetLeft(textBlock, largura);
                 Canvas.SetTop(textBlock, altura + 18);
-                
+
                 RadioButton radioButtonBancosCopy = new RadioButton();
                 radioButtonBancosCopy.Background = Brushes.White;
                 radioButtonBancosCopy.Content = NameDoBanco;
@@ -310,7 +311,7 @@ namespace TelaMain
                     largura = 40;
                 }
 
-                if(stop <= 30) 
+                if (stop <= 30)
                 {
                     canvas4.Children.Add(border);
                     canvas4.Children.Add(statusBanco);
@@ -357,8 +358,14 @@ namespace TelaMain
         private void Atualizador_CheckedChanged(object sender, EventArgs e)
         {
             CheckBox checkBox = (CheckBox)sender;
-            if (checkBox.IsChecked == true) { StatusCheckBox = 1; }
-            else { StatusCheckBox = 0; }
+            if (checkBox.IsChecked == true)
+            {
+                AutoAtualizador = 1;
+            }
+            else
+            {
+                AutoAtualizador = 0;
+            }
         }
 
         private void CheckAtualizador()
@@ -411,7 +418,7 @@ namespace TelaMain
 
         }
 
-        private int CheckBancoUni(string NameDoBanco) 
+        private int CheckBancoUni(string NameDoBanco)
         {
             string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
             string DiretorioRaizRenovar = Path.Combine(DiretorioDeExecuçãoDados, "..");
@@ -441,8 +448,9 @@ namespace TelaMain
                     }
                     connection.Close();
                 }
-            }catch { MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado."); }
-            try 
+            }
+            catch { MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado."); }
+            try
             {
                 using (FbConnection connection = new FbConnection(connectionString))
                 {
@@ -460,7 +468,7 @@ namespace TelaMain
                 }
             }
             catch { MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado."); }
-            if (Result > 1) { ResultFinal = 2;}
+            if (Result > 1) { ResultFinal = 2; }
             else if (Result2 > 1) { ResultFinal = 2; }
             else { ResultFinal = 1; }
 
@@ -588,27 +596,29 @@ namespace TelaMain
                             connection.Close();
                         }
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
-                        MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :01: "+ ex);
+                        MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :01: " + ex);
                         return ListaUniDados;
                     }
                     if (Result > 1) { ResultFinal = 2; }
                     else { ResultFinal = 1; }
 
-                    if (ResultFinal == 1) 
+                    if (ResultFinal == 1)
                     {
-                        if(rest != 1) 
+                        if (rest != 1)
                         {
-                            ListaUniDados.Add("0"+ rest);
-                        }else 
+                            ListaUniDados.Add("0" + rest);
+                        }
+                        else
                         {
                             for (int i = 0; i < Result; i++)
                             {
                                 ListaUniDados.Add("");
                             }
                         }
-                    }else
+                    }
+                    else
                     {
                         uniBanco = 1;
                         for (int i = 0; i < Result; i++)
@@ -621,17 +631,17 @@ namespace TelaMain
 
                 }
             }
-            catch 
+            catch
             {
                 MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :03");
-                return ListaUniDados; 
+                return ListaUniDados;
             }
             return ListaUniDados;
         }
 
         private void Criarini(object sender, EventArgs e)
         {
-            RadioButton radioButtonBancos = (RadioButton)sender;           
+            RadioButton radioButtonBancos = (RadioButton)sender;
 
             int uniBancoCheck = CheckBancoUni((string)radioButtonBancos.Content);
 
@@ -808,7 +818,7 @@ EMPRESA=1";
 
                 string versaoDP = PegaVersaoDP();
                 string VersaoBanco = PegaVersao((string)RadioButtonBanco.Content);
-                if (versaoDP != VersaoBanco) { StatusCheckBox2 = 1;}
+                if (AutoAtualizador == 1) { if (versaoDP != VersaoBanco) { StatusCheckBox2 = 1; } }
 
                 try
                 {
@@ -847,9 +857,9 @@ EMPRESA=1";
                             dsnKey.Close();
                         }
                     }
-                    if (StatusCheckBox == 1 || StatusCheckBox2 == 1) { CheckAtualizador(); }
+                    if (StatusCheckBox2 == 1) { CheckAtualizador(); }
                     else
-                    { 
+                    {
                         MessageBox.Show("Banco Configurado com Sucesso!");
                         canvas2.Children.Clear();
                         BancosTelaInicial();
@@ -878,7 +888,7 @@ EMPRESA=1";
             if (!string.IsNullOrWhiteSpace(searchText))
             {
                 string termoDeBusca = searchText;
-                if (canvas4 != null){canvas4.Children.Clear();}
+                if (canvas4 != null) { canvas4.Children.Clear(); }
                 if (canvas4parte2 != null) { canvas4parte2.Children.Clear(); }
 
                 string DiretorioDeExecução = Directory.GetCurrentDirectory();
@@ -936,7 +946,7 @@ EMPRESA=1";
 
                         Canvas.SetLeft(textBlock, largura);
                         Canvas.SetTop(textBlock, altura + 18);
-                                                              
+
                         RadioButton radioButtonBancosCopy = new RadioButton();
                         radioButtonBancosCopy.Background = Brushes.White;
                         radioButtonBancosCopy.Content = NameDoBanco;
@@ -1054,7 +1064,7 @@ EMPRESA=1";
 
                     Canvas.SetLeft(textBlock, largura);
                     Canvas.SetTop(textBlock, altura + 18);
-                                                          
+
                     RadioButton radioButtonBancosCopy = new RadioButton();
                     radioButtonBancosCopy.Background = Brushes.White;
                     radioButtonBancosCopy.Content = NameDoBanco;
