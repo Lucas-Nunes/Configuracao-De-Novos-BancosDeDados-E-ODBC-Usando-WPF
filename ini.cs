@@ -209,8 +209,147 @@ namespace TelaMain
             }
         }
 
+        private void RadioButtonBancos_MouseRight(object sender, MouseButtonEventArgs e, string NameDoBanco)
+        {
+            canvas5.Children.Clear();
+
+            Point mousePosition = Mouse.GetPosition(Application.Current.MainWindow);
+
+            Shapes.Rectangle desc1 = new Shapes.Rectangle();
+            desc1.Fill = Brushes.White;
+            desc1.Width = 200;
+            desc1.Height = 25;
+            desc1.PreviewMouseLeftButtonDown += (sender, e) => CopiarBancos(NameDoBanco);
+
+            TextBlock desc1text = new TextBlock();
+            desc1text.Text = "Copiar (BACKUP)";
+            desc1text.Foreground = Brushes.Black;
+            desc1text.FontWeight = FontWeights.Bold;
+            desc1text.PreviewMouseLeftButtonDown += (sender, e) => CopiarBancos(NameDoBanco);
+
+            Canvas.SetLeft(desc1text, mousePosition.X);
+            Canvas.SetTop(desc1text, mousePosition.Y);
+
+            Canvas.SetLeft(desc1, mousePosition.X);
+            Canvas.SetTop(desc1, mousePosition.Y);
+
+            canvas5.Children.Add(desc1);
+            canvas5.Children.Add(desc1text);
+
+            //---------
+
+            Shapes.Rectangle desc2 = new Shapes.Rectangle();
+            desc2.Fill = Brushes.White;
+            desc2.Width = 200;
+            desc2.Height = 25;
+            desc2.PreviewMouseLeftButtonDown += (sender, e) => ExcluirBanco(NameDoBanco);
+
+            TextBlock desc2text = new TextBlock();
+            desc2text.Text = "DELETAR";
+            desc2text.Foreground = Brushes.Black;
+            desc2text.FontWeight = FontWeights.Bold;
+            desc2text.PreviewMouseLeftButtonDown += (sender, e) => ExcluirBanco(NameDoBanco);
+
+            Canvas.SetLeft(desc2text, mousePosition.X);
+            Canvas.SetTop(desc2text, mousePosition.Y + 25);
+
+            Canvas.SetLeft(desc2, mousePosition.X);
+            Canvas.SetTop(desc2, mousePosition.Y + 25);
+
+            canvas5.Children.Add(desc2);
+            canvas5.Children.Add(desc2text);
+        }
+
+        private void ExcluirBanco(string NameDoBanco)
+        {
+            canvas5.Children.Clear();
+            MessageBoxResult resultado = MessageBox.Show("Deseja realmente excluir o banco de dados?", "Confirmação", MessageBoxButton.YesNo);
+            if (resultado == MessageBoxResult.Yes)
+            {
+                FbConnection.ClearAllPools();
+                string DiretorioDeExecução = Directory.GetCurrentDirectory();
+                string DiretorioRaiz = Path.Combine(DiretorioDeExecução, "..");
+                string CaminhoDaDados = Path.Combine(DiretorioRaiz, "dados");
+                string Banco = Path.Combine(CaminhoDaDados, NameDoBanco);
+                try
+                {
+                    if (Directory.Exists(Banco))
+                    {
+                        Directory.Delete(Banco, true);
+                        MessageBox.Show("Banco excluído com sucesso!");
+                        BancosTelaInicial();
+                    }
+                    else
+                    {
+                        MessageBox.Show("O Banco não existe.");
+                        BancosTelaInicial();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erro ao excluir a Banco: {ex.Message}");
+                    BancosTelaInicial();
+                }
+            }
+            else if (resultado == MessageBoxResult.No)
+            {
+                BancosTelaInicial();
+            }
+        }
+
+        private void CopiarBancos(string NameDoBanco)
+        {
+            canvas5.Children.Clear();
+            Boolean stop = true;
+            try
+            {
+                string DiretorioDeExecução = Directory.GetCurrentDirectory();
+                string DiretorioRaiz = Path.Combine(DiretorioDeExecução, "..");
+                string CaminhoDaDados = Path.Combine(DiretorioRaiz, "dados");
+                string DadosCopiado = Path.Combine(CaminhoDaDados, NameDoBanco);
+                string NomeEDestino = Path.Combine(CaminhoDaDados, NameDoBanco + " COPIA");
+
+                while (stop == true)
+                {
+                    if (!Directory.Exists(NomeEDestino))
+                    {
+                        Directory.CreateDirectory(NomeEDestino);
+                        stop = false;
+                    }
+                    else
+                    {
+                        NomeEDestino = Path.Combine(NomeEDestino, NomeEDestino + " COPIA");
+                        stop = true;
+                    }
+                }
+
+                string[] arquivos = Directory.GetFiles(DadosCopiado);
+
+                foreach (string arquivo in arquivos)
+                {
+                    string nomeArquivo = Path.GetFileName(arquivo);
+                    string caminhoDestino = Path.Combine(NomeEDestino, nomeArquivo);
+                    File.Copy(arquivo, caminhoDestino, true);
+                }
+
+                MessageBox.Show("Banco copiado com sucesso!");
+                canvas5.Children.Clear();
+                BancosTelaInicial();
+            } catch
+            {
+                MessageBox.Show("Erro ao copiar Banco!");
+                canvas5.Children.Clear();
+                BancosTelaInicial();
+            }
+
+        }
+
+        private void RadioButtonMouseRightClear(object sender, MouseEventArgs e)
+        { canvas5.Children.Clear(); }
+
         private void BancosTelaInicial()
         {
+            canvas5.Children.Clear();
             string DiretorioDeExecução = Directory.GetCurrentDirectory();
             string DiretorioRaiz = Path.Combine(DiretorioDeExecução, "..");
             string CaminhoDaDados = Path.Combine(DiretorioRaiz, "dados");
@@ -238,11 +377,18 @@ namespace TelaMain
                 radioButtonBancos.Foreground = Brushes.Black;
                 radioButtonBancos.FontWeight = FontWeights.Bold;
                 radioButtonBancos.Checked += RadioButtonBancos_Checked;
+                radioButtonBancos.PreviewMouseRightButtonDown += (sender, e) =>
+                {
+                    RadioButtonBancos_MouseRight(sender, e, NameDoBanco);
+                };
 
                 Border border = new Border();
                 border.Background = Brushes.White;
                 border.BorderThickness = new Thickness(3);
                 border.Child = radioButtonBancos;
+
+                Canvas.SetLeft(border, largura - 3);
+                Canvas.SetTop(border, altura);
 
                 Shapes.Rectangle statusBanco = new Shapes.Rectangle();
                 statusBanco.Fill = Brushes.Green;
@@ -258,9 +404,6 @@ namespace TelaMain
                 if (VersaoBanco != versaoDP) { statusBanco.Fill = Brushes.Red; }
                 else { statusBanco.Fill = Brushes.Green; }
                 if (VersaoBanco == "Pasta Vazia!") { statusBanco.Fill = Brushes.Black; }
-
-                Canvas.SetLeft(border, largura - 3);
-                Canvas.SetTop(border, altura);
 
                 Canvas.SetLeft(statusBanco, largura);
                 Canvas.SetTop(statusBanco, altura + 18);
@@ -917,6 +1060,10 @@ EMPRESA=1";
                         radioButtonBancos.Foreground = Brushes.Black;
                         radioButtonBancos.FontWeight = FontWeights.Bold;
                         radioButtonBancos.Checked += RadioButtonBancos_Checked;
+                        radioButtonBancos.PreviewMouseRightButtonDown += (sender, e) =>
+                        {
+                            RadioButtonBancos_MouseRight(sender, e, NameDoBanco);
+                        };
 
                         Border border = new Border();
                         border.Background = Brushes.White;
@@ -1035,6 +1182,10 @@ EMPRESA=1";
                     radioButtonBancos.Foreground = Brushes.Black;
                     radioButtonBancos.FontWeight = FontWeights.Bold;
                     radioButtonBancos.Checked += RadioButtonBancos_Checked;
+                    radioButtonBancos.PreviewMouseRightButtonDown += (sender, e) =>
+                    {
+                        RadioButtonBancos_MouseRight(sender, e, NameDoBanco);
+                    };
 
                     Border border = new Border();
                     border.Background = Brushes.White;
