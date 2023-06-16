@@ -3,7 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Configuração de Novos Bancos de Dados e ODBC"
         Width="1200"
-        Height="650" FontWeight="Bold">		    
+        Height="650" 
+		FontWeight="Bold"
+		MouseLeftButtonDown="RadioButtonMouseRightClear"
+		>		    
     <Grid>
         <Grid x:Name="body">
             <Canvas x:Name="canvas1">
@@ -14,13 +17,15 @@
                              BorderBrush="Black" BorderThickness="1"
                              KeyDown="SearchTextBox_KeyDown"
                              TextChanged = "VerificarTexto"
+						     PreviewMouseLeftButtonDown="RadioButtonMouseRightClear"
                 />
             </Canvas>
-            <Canvas x:Name="canvas2"></Canvas>
-            <Canvas x:Name="canvas3"></Canvas>
-            <Canvas x:Name="canvas4"></Canvas>
-			<Canvas x:Name="canvas4parte2"></Canvas>
-			<Canvas x:Name="Rodape"></Canvas>
+            <Canvas x:Name="canvas2" MouseLeftButtonDown="RadioButtonMouseRightClear"></Canvas>
+            <Canvas x:Name="canvas3" MouseLeftButtonDown="RadioButtonMouseRightClear"></Canvas>
+            <Canvas x:Name="canvas4" MouseLeftButtonDown="RadioButtonMouseRightClear"></Canvas>
+			<Canvas x:Name="canvas4parte2" MouseLeftButtonDown="RadioButtonMouseRightClear"></Canvas>
+			<Canvas x:Name="Rodape" MouseLeftButtonDown="RadioButtonMouseRightClear"></Canvas>
+			<Canvas x:Name="canvas5"></Canvas>
         </Grid>
     </Grid>
 </Window>
