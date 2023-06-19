@@ -215,49 +215,95 @@ namespace TelaMain
 
             Point mousePosition = Mouse.GetPosition(Application.Current.MainWindow);
 
-            Shapes.Rectangle desc1 = new Shapes.Rectangle();
-            desc1.Fill = Brushes.White;
-            desc1.Width = 200;
-            desc1.Height = 25;
-            desc1.PreviewMouseLeftButtonDown += (sender, e) => CopiarBancos(NameDoBanco);
-
-            TextBlock desc1text = new TextBlock();
-            desc1text.Text = "Copiar (BACKUP)";
+            Button desc1text = new Button();
+            desc1text.Content = "Copiar (BACKUP)";
             desc1text.Foreground = Brushes.Black;
             desc1text.FontWeight = FontWeights.Bold;
+            desc1text.Width = 150;
             desc1text.PreviewMouseLeftButtonDown += (sender, e) => CopiarBancos(NameDoBanco);
 
             Canvas.SetLeft(desc1text, mousePosition.X);
             Canvas.SetTop(desc1text, mousePosition.Y);
-
-            Canvas.SetLeft(desc1, mousePosition.X);
-            Canvas.SetTop(desc1, mousePosition.Y);
-
-            canvas5.Children.Add(desc1);
             canvas5.Children.Add(desc1text);
 
-            //---------
-
-            Shapes.Rectangle desc2 = new Shapes.Rectangle();
-            desc2.Fill = Brushes.White;
-            desc2.Width = 200;
-            desc2.Height = 25;
-            desc2.PreviewMouseLeftButtonDown += (sender, e) => ExcluirBanco(NameDoBanco);
-
-            TextBlock desc2text = new TextBlock();
-            desc2text.Text = "DELETAR";
+            Button desc2text = new Button();
+            desc2text.Content = "DELETAR";
+            desc2text.Width = 150;
             desc2text.Foreground = Brushes.Black;
             desc2text.FontWeight = FontWeights.Bold;
             desc2text.PreviewMouseLeftButtonDown += (sender, e) => ExcluirBanco(NameDoBanco);
 
             Canvas.SetLeft(desc2text, mousePosition.X);
-            Canvas.SetTop(desc2text, mousePosition.Y + 25);
-
-            Canvas.SetLeft(desc2, mousePosition.X);
-            Canvas.SetTop(desc2, mousePosition.Y + 25);
-
-            canvas5.Children.Add(desc2);
+            Canvas.SetTop(desc2text, mousePosition.Y + 20);
             canvas5.Children.Add(desc2text);
+
+            double x = mousePosition.X;
+            double y = mousePosition.Y + 40;
+
+            Button renomear = new Button();
+            renomear.Content = "RENOMEAR";
+            renomear.Width = 150;
+            renomear.Foreground = Brushes.Black;
+            renomear.FontWeight = FontWeights.Bold;
+            renomear.PreviewMouseLeftButtonDown += (sender, e) => RenomearBanco(NameDoBanco, x, y);
+
+            Canvas.SetLeft(renomear, x);
+            Canvas.SetTop(renomear, y);
+            canvas5.Children.Add(renomear);
+        }
+
+        private void RenomearBanco(string NameDoBanco, double x, double y)
+        {
+            FbConnection.ClearAllPools();
+            TextBox renomearTexto = new TextBox();
+            renomearTexto.Width = 150;
+            renomearTexto.Text = NameDoBanco;
+            renomearTexto.PreviewKeyDown += (sender, e) =>
+            {
+                if (e.Key == Key.Enter)
+                {
+                    RenomearBanco2(NameDoBanco, renomearTexto.Text);
+                }
+            };
+
+            Canvas.SetLeft(renomearTexto, x + 150);
+            Canvas.SetTop(renomearTexto, y + 20);
+            canvas5.Children.Add(renomearTexto);
+        }
+
+        private void RenomearBanco2(string NameDoBanco, string novoNome)
+        {
+            FbConnection.ClearAllPools();
+            canvas5.Children.Clear();
+            if (!string.IsNullOrWhiteSpace(novoNome))
+            {
+                try
+                {
+                    string DiretorioDeExecução = Directory.GetCurrentDirectory();
+                    string DiretorioRaiz = Path.Combine(DiretorioDeExecução, "..");
+                    string CaminhoDaDados = Path.Combine(DiretorioRaiz, "dados");
+                    string CaminhoDoBanco = Path.Combine(CaminhoDaDados, NameDoBanco);
+                    string CaminhoDoBancoNomeNovo = Path.Combine(CaminhoDaDados, novoNome);
+                    Directory.Move(CaminhoDoBanco, CaminhoDoBancoNomeNovo);
+
+                    MessageBox.Show("Banco renomeado com sucesso!");
+                    BancosTelaInicial();
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message == "Source and destination path must be different.")
+                    {
+                        MessageBox.Show("Erro ao renomear! \nEsse Nome já existe! ");
+                        BancosTelaInicial();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Erro ao renomear!\n " + ex.Message);
+                        BancosTelaInicial();
+                    }
+                }
+            }
+            else { MessageBox.Show("Erro ao renomear!\n Nome vazio!"); }
         }
 
         private void ExcluirBanco(string NameDoBanco)
@@ -277,6 +323,8 @@ namespace TelaMain
                     {
                         Directory.Delete(Banco, true);
                         MessageBox.Show("Banco excluído com sucesso!");
+                        canvas4.Children.Clear();
+                        canvas4parte2.Children.Clear();
                         BancosTelaInicial();
                     }
                     else
@@ -334,8 +382,11 @@ namespace TelaMain
 
                 MessageBox.Show("Banco copiado com sucesso!");
                 canvas5.Children.Clear();
+                canvas4.Children.Clear();
+                canvas4parte2.Children.Clear();
                 BancosTelaInicial();
-            } catch
+            }
+            catch
             {
                 MessageBox.Show("Erro ao copiar Banco!");
                 canvas5.Children.Clear();
