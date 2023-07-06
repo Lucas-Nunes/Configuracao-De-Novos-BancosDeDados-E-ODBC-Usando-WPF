@@ -22,6 +22,7 @@ namespace TelaMain
         private int AutoAtualizador;
         private int StatusCheckBox2;
         private int uniBanco = 0;
+        private string BancoAtual;
         public MainWindow()
         {
             InitializeComponent();
@@ -35,9 +36,13 @@ namespace TelaMain
         [STAThread]
         public static void Main()
         {
-            Application app = new Application();
-            MainWindow mainWindow = new MainWindow();
-            app.Run(mainWindow);
+            try
+            {
+                Application app = new Application();
+                MainWindow mainWindow = new MainWindow();
+                app.Run(mainWindow);
+            }
+            catch (Exception E) { MessageBox.Show("Erro ao abrir o programa:\n\n" + "Erro:\n" + E.Message); }
         }
 
         private void SetWindowSize()
@@ -92,6 +97,27 @@ namespace TelaMain
 
             canvas3.Children.Add(desc1);
             canvas3.Children.Add(desc1text);
+
+
+            Shapes.Rectangle desc3 = new Shapes.Rectangle();
+            desc3.Fill = Brushes.Purple;
+            desc3.Width = 150;
+            desc3.Height = 20;
+
+            TextBlock desc3text = new TextBlock();
+            desc3text.Text = "Banco Atual";
+            desc3text.Foreground = Brushes.White;
+            desc3text.FontWeight = FontWeights.Bold;
+
+            Canvas.SetLeft(desc3text, 300);
+            Canvas.SetTop(desc3text, 70);
+
+            Canvas.SetLeft(desc3, 300);
+            Canvas.SetTop(desc3, 70);
+            
+            canvas3.Children.Add(desc3);
+            canvas3.Children.Add(desc3text);
+
             CheckBox checkboxatualizador = new CheckBox();
             checkboxatualizador.Background = Brushes.White;
             checkboxatualizador.Content = "Atualizador de Banco Automático";
@@ -112,6 +138,7 @@ namespace TelaMain
             Canvas.SetTop(descAt, 70);
             canvas3.Children.Add(descAt);
             canvas3.Children.Add(checkboxatualizador);
+
             Shapes.Rectangle desc2 = new Shapes.Rectangle();
             desc2.Fill = Brushes.Red;
             desc2.Width = 150;
@@ -136,6 +163,26 @@ namespace TelaMain
             foreach (UIElement elemento in canvas4parte2.Children)
             {
                 elemento.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void VerificarBancoAtual(string NameDoBanco)
+        {
+            string DiretorioDeExecução = Directory.GetCurrentDirectory();
+            string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+
+            BancoAtual = File.ReadAllText(ConfigBanco);
+
+            if (BancoAtual != NameDoBanco)
+            {
+                try
+                {
+                    using (StreamWriter arquivo = File.CreateText(ConfigBanco))
+                    {
+                        arquivo.WriteLine(NameDoBanco);
+                    }
+                }
+                catch (Exception E) { MessageBox.Show("Erro ao gravar banco atual:\n\n" + "Erro:\n" + E.Message); }
             }
         }
 
@@ -400,6 +447,7 @@ namespace TelaMain
 
         private void BancosTelaInicial()
         {
+            canvas6.Children.Clear();
             canvas5.Children.Clear();
             string DiretorioDeExecução = Directory.GetCurrentDirectory();
             string DiretorioRaiz = Path.Combine(DiretorioDeExecução, "..");
@@ -455,6 +503,20 @@ namespace TelaMain
                 if (VersaoBanco != versaoDP) { statusBanco.Fill = Brushes.Red; }
                 else { statusBanco.Fill = Brushes.Green; }
                 if (VersaoBanco == "Pasta Vazia!") { statusBanco.Fill = Brushes.Black; }
+
+                string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+                BancoAtual = File.ReadAllText(ConfigBanco);
+                if (BancoAtual.Trim() == NameDoBanco.Trim())
+                {
+                    Shapes.Rectangle statusBancoAtual = new Shapes.Rectangle();
+                    statusBancoAtual.Fill = Brushes.Purple;
+                    statusBancoAtual.Width = 210;
+                    statusBancoAtual.Height = 5;
+
+                    Canvas.SetLeft(statusBancoAtual, largura);
+                    Canvas.SetTop(statusBancoAtual, altura-3);
+                    canvas6.Children.Add(statusBancoAtual);
+                }
 
                 Canvas.SetLeft(statusBanco, largura);
                 Canvas.SetTop(statusBanco, altura + 18);
@@ -817,7 +879,7 @@ namespace TelaMain
                         uniBanco = 1;
                         for (int i = 0; i < Result; i++)
                         {
-                            if (rest == 1) { ListaUniDados.Add(""); }
+                            if (rest == 1) { ListaUniDados.Add("UniBanco"); }
                             else { ListaUniDados.Add("0" + rest); }
                         }
                     }
@@ -832,6 +894,92 @@ namespace TelaMain
             }
             return ListaUniDados;
         }
+
+        private List<string> PegaDadosUniBancoSegundaVerificação(object sender, EventArgs e)
+        {
+            List<string> ListaUniDados = new List<string>();
+            try
+            {
+                RadioButton radioButtonBancos = (RadioButton)sender;
+                string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
+                string diretorioPaiDados = Path.Combine(DiretorioDeExecuçãoDados, "..");
+                string pastaDados = Path.Combine(diretorioPaiDados, "dados");
+                string pastaComBanco = Path.Combine(pastaDados, (string)radioButtonBancos.Content);
+                string[] arquivos = Directory.GetFiles(pastaComBanco, "*DADOS*").Where(arquivo => !Path.GetFileName(arquivo).Contains("DADOSEMP")).ToArray();
+                int rest = 1;
+                int ResultFinal;
+                string connectionString = "";
+                foreach (string arquivo in arquivos)
+                {
+                    if (rest == 1) { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS.fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                    else { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS0" + rest + ".fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                    string query = "SELECT COUNT(distinct codemp) FROM produtos;";
+                    int Result = 0;
+                    try
+                    {
+                        using (FbConnection connection = new FbConnection(connectionString))
+                        {
+                            connection.Open();
+                            using (FbCommand command = new FbCommand(query, connection))
+                            {
+                                using (FbDataReader reader = command.ExecuteReader())
+                                {
+                                    while (reader.Read())
+                                    {
+                                        Result = reader.GetInt32(0);
+                                    }
+                                }
+                            }
+                            connection.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :01: " + ex);
+                        return ListaUniDados;
+                    }
+                    if (Result > 1) { ResultFinal = 2; }
+                    else { ResultFinal = 1; }
+
+                    if (ResultFinal == 1)
+                    {
+                        if (rest != 1)
+                        {
+                            ListaUniDados.Add("0" + rest);
+                        }
+                        else
+                        {
+                            for (int i = 0; i < Result; i++)
+                            {
+                                ListaUniDados.Add("");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        uniBanco = 1;
+                        for (int i = 0; i < Result; i++)
+                        {
+                            if (rest == 1 && i == 0) { 
+                                ListaUniDados.Add("UniBanco");}
+                            else
+                            { 
+                                if( rest != 1 ){ListaUniDados.Add("0" + rest); }
+                                else {ListaUniDados.Add("UniBanco");}
+                            }
+                        }
+                    }
+                    rest++;
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :03");
+                return ListaUniDados;
+            }
+            return ListaUniDados;
+        }
+
 
         private void Criarini(object sender, EventArgs e)
         {
@@ -850,17 +998,27 @@ namespace TelaMain
             string NomeDoArquivo = "renovar.ini";
             string caminhoCompleto = Path.Combine(pastaDestino, NomeDoArquivo);
             List<string> cnpjResult = PegaCNPJ(sender, e);
-            List<string> DadosUni = PegaDadosUniBanco(sender, e);
+            List<string> DadosUni;
+            if(PegaDadosUniBanco(sender, e).Count > PegaDadosUniBancoSegundaVerificação(sender, e).Count )
+            {DadosUni = PegaDadosUniBanco(sender, e);}
+            else
+            {DadosUni = PegaDadosUniBancoSegundaVerificação(sender, e);}
 
             for (int i = 0; i < 10; i++)
             {
                 if (i >= DadosUni.Count)
                 {
-                    DadosUni.Add("sem Dados1");
+                    DadosUni.Add("sem Dados");
+                }
+                else if (string.IsNullOrEmpty(DadosUni[i]))
+                {
+                    if(DadosUni[i] == "UniBanco"){DadosUni[i] = "";}
+                    else {DadosUni.Add("sem Dados");}
                 }
                 else
                 {
-                    DadosUni.Add("");
+                    if(DadosUni[i] == "UniBanco"){DadosUni[i] = "";}
+                    else {DadosUni.Add("sem Dados");}
                 }
             }
 
@@ -883,53 +1041,54 @@ namespace TelaMain
 
                 }
             }
-            string DadosDoArquivo = @"
-[SISTEMA]
-DADOS01=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados.fdb
-DADOS02=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[1] + ".fdb" + @"
-DADOS03=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[2] + ".fdb" + @"
-DADOS04=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[3] + ".fdb" + @"
-DADOS05=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[4] + ".fdb" + @"
-DADOS06=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb" + @"
-DADOS07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[6] + ".fdb" + @"
-DADOS08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[7] + ".fdb" + @"
-DADOS09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[8] + ".fdb" + @"
-DADOSEMP=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\DadosEmp.fdb
-DADOSREDE01=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados.fdb
-DADOSREDE02=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[1] + ".fdb" + @"
-DADOSREDE03=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[2] + ".fdb" + @"
-DADOSREDE04=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[3] + ".fdb" + @"
-DADOSREDE05=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[4] + ".fdb" + @"
-DADOSREDE06=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb" + @"
-DADOSREDE07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[6] + ".fdb" + @"
-DADOSREDE08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[7] + ".fdb" + @"
-DADOSREDE09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[8] + ".fdb" + @"
-DADOSREDEEMP=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\DadosEmp.fdb
-DADOSLOG=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Log.fdb
-DADOSREDELOG=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Log.fdb
-CNPJ01=" + cnpjResult[0] + "\n" +
-    "CNPJ02=" + cnpjResult[1] + "\n" +
-    "CNPJ03=" + cnpjResult[2] + "\n" +
-    "CNPJ04=" + cnpjResult[3] + "\n" +
-    "CNPJ05=" + cnpjResult[4] + "\n" +
-    "CNPJ06=" + cnpjResult[5] + "\n" +
-    "CNPJ07=" + cnpjResult[6] + "\n" +
-    "CNPJ08=" + cnpjResult[7] + "\n" +
-    "CNPJ09=" + cnpjResult[8] + @"
-SERVIDOR=LOCALHOST
+            string DadosDoArquivo = @"[SISTEMA]
+DADOS01=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados.fdb\n";
 
-[REDE]
-DADOSREDE01=C:\RENOVAR\DADOS\" + radioButtonBancos.Content + @"\Dados.fdb
-DADOSREDEEMP=C:\RENOVAR\DADOS\" + radioButtonBancos.Content + @"\DadosEmp.fdb
-DADOSREDELOG=C:\RENOVAR\DADOS\" + radioButtonBancos.Content + @"\Log.fdb
-SERVIDORREDE=LOCALHOST
+            if (DadosUni[1] != "sem Dados") { DadosDoArquivo += @"DADOS02=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[1] + ".fdb\n"; };
+            if (DadosUni[2] != "sem Dados") { DadosDoArquivo += @"DADOS03=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[2] + ".fdb\n"; };
+            if (DadosUni[3] != "sem Dados") { DadosDoArquivo += @"DADOS04=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[3] + ".fdb\n"; };
+            if (DadosUni[4] != "sem Dados") { DadosDoArquivo += @"DADOS05=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[4] + ".fdb\n"; };
+            if (DadosUni[5] != "sem Dados") { DadosDoArquivo += @"DADOS06=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[5] + ".fdb\n"; };
+            if (DadosUni[6] != "sem Dados") { DadosDoArquivo += @"DADOS07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[6] + ".fdb\n"; };
+            if (DadosUni[7] != "sem Dados") { DadosDoArquivo += @"DADOS08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[7] + ".fdb\n"; };
+            if (DadosUni[8] != "sem Dados") { DadosDoArquivo += @"DADOS09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + @"\Dados" + DadosUni[8] + ".fdb\n"; };
+            DadosDoArquivo += @"DADOSEMP=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\DadosEmp.fdb\n";
+            DadosDoArquivo += @"DADOSLOG=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Log.fdb\n";
+            DadosDoArquivo += "SERVIDOR=LOCALHOST\n";
+            DadosDoArquivo += "\n";
 
+            DadosDoArquivo += @"DADOSREDE01=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados.fdb\n";
+            if (DadosUni[1] != "sem Dados") { DadosDoArquivo += @"DADOSREDE02=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[1] + ".fdb\n"; }
+            if (DadosUni[2] != "sem Dados") { DadosDoArquivo += @"DADOSREDE03=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[2] + ".fdb\n"; }
+            if (DadosUni[3] != "sem Dados") { DadosDoArquivo += @"DADOSREDE04=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[3] + ".fdb\n"; }
+            if (DadosUni[4] != "sem Dados") { DadosDoArquivo += @"DADOSREDE05=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[4] + ".fdb\n"; }
+            if (DadosUni[5] != "sem Dados") { DadosDoArquivo += @"DADOSREDE06=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[5] + ".fdb\n"; }
+            if (DadosUni[6] != "sem Dados") { DadosDoArquivo += @"DADOSREDE07=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[6] + ".fdb\n"; }
+            if (DadosUni[7] != "sem Dados") { DadosDoArquivo += @"DADOSREDE08=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[7] + ".fdb\n"; }
+            if (DadosUni[8] != "sem Dados") { DadosDoArquivo += @"DADOSREDE09=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Dados" + DadosUni[8] + ".fdb\n"; }
+            DadosDoArquivo += @"DADOSREDEEMP=C:\RENOVAR\DADOS\" + radioButtonBancos.Content + "\\DadosEmp.fdb\n";
+            DadosDoArquivo += @"DADOSREDELOG=C:\RENOVAR\DADOS\" + (string)radioButtonBancos.Content + "\\Log.fdb\n";
+            DadosDoArquivo += "SERVIDORREDE=LOCALHOST\n";
+            DadosDoArquivo += "\n";
+
+            if (cnpjResult[0] != "sem CNPJ") { DadosDoArquivo += "CNPJ01=" + cnpjResult[0] + "\n"; };
+            if (cnpjResult[1] != "sem CNPJ") { DadosDoArquivo += "CNPJ02=" + cnpjResult[1] + "\n"; };
+            if (cnpjResult[2] != "sem CNPJ") { DadosDoArquivo += "CNPJ03=" + cnpjResult[2] + "\n"; };
+            if (cnpjResult[3] != "sem CNPJ") { DadosDoArquivo += "CNPJ04=" + cnpjResult[3] + "\n"; };
+            if (cnpjResult[4] != "sem CNPJ") { DadosDoArquivo += "CNPJ05=" + cnpjResult[4] + "\n"; };
+            if (cnpjResult[5] != "sem CNPJ") { DadosDoArquivo += "CNPJ06=" + cnpjResult[5] + "\n"; };
+            if (cnpjResult[6] != "sem CNPJ") { DadosDoArquivo += "CNPJ07=" + cnpjResult[6] + "\n"; };
+            if (cnpjResult[7] != "sem CNPJ") { DadosDoArquivo += "CNPJ08=" + cnpjResult[7] + "\n"; };
+            if (cnpjResult[8] != "sem CNPJ") { DadosDoArquivo += "CNPJ09=" + cnpjResult[8] + "\n"; };
+
+            DadosDoArquivo += @"
 [SQL]
 DADOS_SQL01=Dados01
 DADOS_SQLEMP=DadosEmp
 DADOS_SQLLOG=DadosLog" + "\n" +
 
-    @"[HOST]
+            @"
+[HOST]
 HOST01=DESENV01\SQL2008
 HOST02=DESENV01\SQL2008
 HOST03=DESENV01\SQL2008
@@ -945,7 +1104,7 @@ HOSTLOG=DESENV01\SQL2008
 
 [DATABASE]
 SGBD=01
-UNIFICADA=" + uniBanco + "\n" + @"
+UNIFICADA=" + uniBanco + @"
 
 [DATABASE VERSION]
 VERSION=2008
@@ -994,12 +1153,107 @@ EMPRESA=1";
             catch { return returne; }
         }
 
+        private int VerificarQuantidadeDeEmpresas(object sender, EventArgs e, int rest)
+        {
+            int Result = 0;
+            try
+            {
+                RadioButton radioButtonBancos = (RadioButton)sender;
+                string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
+                string diretorioPaiDados = Path.Combine(DiretorioDeExecuçãoDados, "..");
+                string pastaDados = Path.Combine(diretorioPaiDados, "dados");
+                string pastaComBanco = Path.Combine(pastaDados, (string)radioButtonBancos.Content);
+                string[] arquivos = Directory.GetFiles(pastaComBanco, "*DADOS*").Where(arquivo => !Path.GetFileName(arquivo).Contains("DADOSEMP")).ToArray();
+                string connectionString = "";
+                    if (rest == 1) { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS.fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                    else { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS0" + rest + ".fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                    string query = "SELECT COUNT(distinct codemp) FROM produtos;";
+                    try
+                    {
+                        using (FbConnection connection = new FbConnection(connectionString))
+                        {
+                            connection.Open();
+                            using (FbCommand command = new FbCommand(query, connection))
+                            {
+                                using (FbDataReader reader = command.ExecuteReader())
+                                {
+                                    while (reader.Read())
+                                    {
+                                        Result = reader.GetInt32(0);
+                                    }
+                                }
+                            }
+                            connection.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :01: " + ex);
+                        return Result;
+                    }
+                    return Result;
+            }
+            catch
+            {
+                MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :03");
+                return Result;
+            }
+        }
+
+        private int VerificarQuantidadeDeEmpresasEtapa2(object sender, EventArgs e, int rest)
+        {
+            int Result = 0;
+            try
+            {
+                RadioButton radioButtonBancos = (RadioButton)sender;
+                string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
+                string diretorioPaiDados = Path.Combine(DiretorioDeExecuçãoDados, "..");
+                string pastaDados = Path.Combine(diretorioPaiDados, "dados");
+                string pastaComBanco = Path.Combine(pastaDados, (string)radioButtonBancos.Content);
+                string[] arquivos = Directory.GetFiles(pastaComBanco, "*DADOS*").Where(arquivo => !Path.GetFileName(arquivo).Contains("DADOSEMP")).ToArray();
+                string connectionString = "";
+                if (rest == 1) { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS.fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                else { connectionString = "User=SYSDBA;Password=masterkey;Database=" + pastaComBanco + "\\DADOS0" + rest + ".fdb;DataSource=localhost;Port=3050;Dialect=3;Charset=NONE;"; }
+                string query = "SELECT COUNT(distinct codemp) FROM pessoa;";
+                try
+                {
+                    using (FbConnection connection = new FbConnection(connectionString))
+                    {
+                        connection.Open();
+                        using (FbCommand command = new FbCommand(query, connection))
+                        {
+                            using (FbDataReader reader = command.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    Result = reader.GetInt32(0);
+                                }
+                            }
+                        }
+                        connection.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :01: " + ex);
+                    return Result;
+                }
+                return Result;
+            }
+            catch
+            {
+                MessageBox.Show("Erro: Falha na consulta ao banco de dados durante a verificação do banco unificado. :03");
+                return Result;
+            }
+        }
+
         private void RadioButtonBancos_Checked(object sender, RoutedEventArgs e)
         {
             RadioButton RadioButtonBanco = (RadioButton)sender;
             if (RadioButtonBanco.IsChecked == true)
             {
                 int i = 0;
+                int j = 0;
                 string pastaComBanco;
                 IEnumerable<string> arquivosFiltrados = BuscarArquivosDados(sender, e);
                 if (arquivosFiltrados.Any()) { }
@@ -1010,45 +1264,57 @@ EMPRESA=1";
                 }
                 Criarini(sender, e);
 
+                VerificarBancoAtual((string)RadioButtonBanco.Content);
+
                 string versaoDP = PegaVersaoDP();
                 string VersaoBanco = PegaVersao((string)RadioButtonBanco.Content);
                 if (AutoAtualizador == 1) { if (versaoDP != VersaoBanco) { StatusCheckBox2 = 1; } }
 
+                int DadosUni;
                 try
                 {
                     foreach (string arquivos in arquivosFiltrados)
                     {
-                        i++;
-                        string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
-                        string diretorioPaiDados = Path.Combine(DiretorioDeExecuçãoDados, "..");
-                        string pastaDados = Path.Combine(diretorioPaiDados, "dados");
-                        if (i > 1) { pastaComBanco = Path.Combine(pastaDados, (string)RadioButtonBanco.Content, "dados0" + i + ".fdb"); }
-                        else { pastaComBanco = Path.Combine(pastaDados, (string)RadioButtonBanco.Content, "dados.fdb"); }
-                        string dsnName = "RENOVARFB0" + i;
-                        string driverName = "Firebird/InterBase(r) driver";
-                        string databasePath = pastaComBanco;
-                        string username = "SYSDBA";
-                        string password = "masterkey";
-                        string Descrição = "Dados0" + i;
-                        string Client = "C:\\Program Files (x86)\\Firebird\\Firebird_3_0\\fbclient.dll";
-                        string dsnConnectionString = $"DRIVER={{{driverName}}};DBNAME={databasePath};UID={username};PWD={password};";
-                        if (Registry.CurrentUser.OpenSubKey("Software\\ODBC\\ODBC.INI\\ODBC Data Sources") == null)
+                        j++;
+                        if (VerificarQuantidadeDeEmpresas(sender, e, j) > VerificarQuantidadeDeEmpresasEtapa2(sender, e, j))
+                        { DadosUni = VerificarQuantidadeDeEmpresas(sender, e, j); }
+                        else
+                        { DadosUni = VerificarQuantidadeDeEmpresasEtapa2(sender, e, j); }
+                        while ( DadosUni != 0) 
                         {
-                            Registry.CurrentUser.CreateSubKey("Software\\ODBC\\ODBC.INI\\ODBC Data Sources");
-                        }
-                        RegistryKey odbcKey = Registry.CurrentUser.OpenSubKey("Software\\ODBC\\ODBC.INI\\ODBC Data Sources", true);
-                        odbcKey.SetValue(dsnName, driverName);
-                        if (odbcKey != null) { odbcKey.Close(); }
-                        RegistryKey dsnKey = Registry.CurrentUser.CreateSubKey("Software\\ODBC\\ODBC.INI\\" + dsnName);
-                        if (dsnKey != null)
-                        {
-                            dsnKey.SetValue("Driver", driverName);
-                            dsnKey.SetValue("Dbname", databasePath);
-                            dsnKey.SetValue("User", username);
-                            dsnKey.SetValue("Password", password);
-                            dsnKey.SetValue("Client", Client);
-                            dsnKey.SetValue("Description", Descrição);
-                            dsnKey.Close();
+                            i++;
+                            string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
+                            string diretorioPaiDados = Path.Combine(DiretorioDeExecuçãoDados, "..");
+                            string pastaDados = Path.Combine(diretorioPaiDados, "dados");
+                            if (j > 1) { pastaComBanco = Path.Combine(pastaDados, (string)RadioButtonBanco.Content, "dados0" + i + ".fdb"); }
+                            else { pastaComBanco = Path.Combine(pastaDados, (string)RadioButtonBanco.Content, "dados.fdb"); }
+                            string dsnName = "RENOVARFB0" + i;
+                            string driverName = "Firebird/InterBase(r) driver";
+                            string databasePath = pastaComBanco;
+                            string username = "SYSDBA";
+                            string password = "masterkey";
+                            string Descrição = "Dados0" + i;
+                            string Client = "C:\\Program Files (x86)\\Firebird\\Firebird_3_0\\fbclient.dll";
+                            string dsnConnectionString = $"DRIVER={{{driverName}}};DBNAME={databasePath};UID={username};PWD={password};";
+                            if (Registry.CurrentUser.OpenSubKey("Software\\ODBC\\ODBC.INI\\ODBC Data Sources") == null)
+                            {
+                                Registry.CurrentUser.CreateSubKey("Software\\ODBC\\ODBC.INI\\ODBC Data Sources");
+                            }
+                            RegistryKey odbcKey = Registry.CurrentUser.OpenSubKey("Software\\ODBC\\ODBC.INI\\ODBC Data Sources", true);
+                            odbcKey.SetValue(dsnName, driverName);
+                            if (odbcKey != null) { odbcKey.Close(); }
+                            RegistryKey dsnKey = Registry.CurrentUser.CreateSubKey("Software\\ODBC\\ODBC.INI\\" + dsnName);
+                            if (dsnKey != null)
+                            {
+                                dsnKey.SetValue("Driver", driverName);
+                                dsnKey.SetValue("Dbname", databasePath);
+                                dsnKey.SetValue("User", username);
+                                dsnKey.SetValue("Password", password);
+                                dsnKey.SetValue("Client", Client);
+                                dsnKey.SetValue("Description", Descrição);
+                                dsnKey.Close();
+                            }
+                            DadosUni--;
                         }
                     }
                     if (StatusCheckBox2 == 1) { CheckAtualizador(); }
@@ -1084,6 +1350,7 @@ EMPRESA=1";
                 string termoDeBusca = searchText;
                 if (canvas4 != null) { canvas4.Children.Clear(); }
                 if (canvas4parte2 != null) { canvas4parte2.Children.Clear(); }
+                canvas6.Children.Clear();
 
                 string DiretorioDeExecução = Directory.GetCurrentDirectory();
                 string diretorioPai = Path.Combine(DiretorioDeExecução, "..");
@@ -1135,6 +1402,20 @@ EMPRESA=1";
                         if (VersaoBanco != versaoDP) { statusBanco.Fill = Brushes.Red; }
                         else { statusBanco.Fill = Brushes.Green; }
                         if (VersaoBanco == "Pasta Vazia!") { statusBanco.Fill = Brushes.Black; }
+
+                        string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+                        BancoAtual = File.ReadAllText(ConfigBanco);
+                        if (BancoAtual.Trim() == NameDoBanco.Trim())
+                        {
+                            Shapes.Rectangle statusBancoAtual = new Shapes.Rectangle();
+                            statusBancoAtual.Fill = Brushes.Purple;
+                            statusBancoAtual.Width = 210;
+                            statusBancoAtual.Height = 5;
+
+                            Canvas.SetLeft(statusBancoAtual, largura);
+                            Canvas.SetTop(statusBancoAtual, altura-3);
+                            canvas6.Children.Add(statusBancoAtual);
+                        }
 
                         Canvas.SetLeft(border, largura - 3);
                         Canvas.SetTop(border, altura);
@@ -1211,6 +1492,7 @@ EMPRESA=1";
             }
             else
             {
+                canvas6.Children.Clear();
                 canvas4.Children.Clear();
                 canvas4parte2.Children.Clear();
 
@@ -1257,6 +1539,20 @@ EMPRESA=1";
                     if (VersaoBanco != versaoDP) { statusBanco.Fill = Brushes.Red; }
                     else { statusBanco.Fill = Brushes.Green; }
                     if (VersaoBanco == "Pasta Vazia!") { statusBanco.Fill = Brushes.Black; }
+
+                    string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+                    BancoAtual = File.ReadAllText(ConfigBanco);
+                    if (BancoAtual.Trim() == NameDoBanco.Trim())
+                    {
+                        Shapes.Rectangle statusBancoAtual = new Shapes.Rectangle();
+                        statusBancoAtual.Fill = Brushes.Purple;
+                        statusBancoAtual.Width = 210;
+                        statusBancoAtual.Height = 5;
+
+                        Canvas.SetLeft(statusBancoAtual, largura);
+                        Canvas.SetTop(statusBancoAtual, altura-3);
+                        canvas6.Children.Add(statusBancoAtual);
+                    }
 
                     Canvas.SetLeft(border, largura - 3);
                     Canvas.SetTop(border, altura);
