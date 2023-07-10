@@ -23,6 +23,8 @@ namespace TelaMain
         private int StatusCheckBox2;
         private int uniBanco = 0;
         private string BancoAtual;
+        private string BancoAtualPaginas;
+        private int PaginaAtual;
         public MainWindow()
         {
             InitializeComponent();
@@ -61,6 +63,7 @@ namespace TelaMain
             string versaoDP = PegaVersaoDP();
             Canvas canvas = FindName("canvas2") as Canvas;
             Canvas canvas3 = FindName("canvas3") as Canvas;
+
             Shapes.Rectangle VersaoDispo = new Shapes.Rectangle();
             VersaoDispo.Fill = Brushes.White;
             VersaoDispo.Width = 150;
@@ -79,6 +82,7 @@ namespace TelaMain
 
             canvas3.Children.Add(VersaoDispo);
             canvas3.Children.Add(textVersaoDispo);
+
             Shapes.Rectangle desc1 = new Shapes.Rectangle();
             desc1.Fill = Brushes.Green;
             desc1.Width = 150;
@@ -90,13 +94,15 @@ namespace TelaMain
             desc1text.FontWeight = FontWeights.Bold;
 
             Canvas.SetLeft(desc1text, 800);
-            Canvas.SetTop(desc1text, 70);
+            Canvas.SetTop(desc1text, 585);
+            Canvas.SetZIndex(desc1text, 9999);
 
             Canvas.SetLeft(desc1, 800);
-            Canvas.SetTop(desc1, 70);
+            Canvas.SetTop(desc1, 585);
+            Canvas.SetZIndex(desc1, 9999);
 
-            canvas3.Children.Add(desc1);
-            canvas3.Children.Add(desc1text);
+            Rodape.Children.Add(desc1);
+            Rodape.Children.Add(desc1text);
 
 
             Shapes.Rectangle desc3 = new Shapes.Rectangle();
@@ -109,14 +115,16 @@ namespace TelaMain
             desc3text.Foreground = Brushes.White;
             desc3text.FontWeight = FontWeights.Bold;
 
-            Canvas.SetLeft(desc3text, 300);
-            Canvas.SetTop(desc3text, 70);
+            Canvas.SetLeft(desc3text, 630);
+            Canvas.SetTop(desc3text, 585);
+            Canvas.SetZIndex(desc3text, 9999);
 
-            Canvas.SetLeft(desc3, 300);
-            Canvas.SetTop(desc3, 70);
+            Canvas.SetLeft(desc3, 630);
+            Canvas.SetTop(desc3, 585);
+            Canvas.SetZIndex(desc3, 9999);
             
-            canvas3.Children.Add(desc3);
-            canvas3.Children.Add(desc3text);
+            Rodape.Children.Add(desc3);
+            Rodape.Children.Add(desc3text);//canvas3
 
             CheckBox checkboxatualizador = new CheckBox();
             checkboxatualizador.Background = Brushes.White;
@@ -127,14 +135,14 @@ namespace TelaMain
             checkboxatualizador.Checked += Atualizador_CheckedChanged;
             checkboxatualizador.Unchecked += Atualizador_CheckedChanged;
             checkboxatualizador.IsChecked = true;
-            Canvas.SetLeft(checkboxatualizador, 500);
+            Canvas.SetLeft(checkboxatualizador, 210);
             Canvas.SetTop(checkboxatualizador, 72);
 
             Shapes.Rectangle descAt = new Shapes.Rectangle();
             descAt.Fill = Brushes.White;
             descAt.Width = 220;//150
             descAt.Height = 20;
-            Canvas.SetLeft(descAt, 500);
+            Canvas.SetLeft(descAt, 210);
             Canvas.SetTop(descAt, 70);
             canvas3.Children.Add(descAt);
             canvas3.Children.Add(checkboxatualizador);
@@ -150,16 +158,17 @@ namespace TelaMain
             desc2text.FontWeight = FontWeights.Bold;
 
             Canvas.SetLeft(desc2text, 970);
-            Canvas.SetTop(desc2text, 70);
+            Canvas.SetTop(desc2text, 585);
+            Canvas.SetZIndex(desc2text, 9999);
 
             Canvas.SetLeft(desc2, 970);
-            Canvas.SetTop(desc2, 70);
+            Canvas.SetTop(desc2, 585);
+            Canvas.SetZIndex(desc2, 9999);
 
-            canvas3.Children.Add(desc2);
-            canvas3.Children.Add(desc2text);
+            Rodape.Children.Add(desc2);
+            Rodape.Children.Add(desc2text);
 
             BancosTelaInicial();
-            paginas();
             foreach (UIElement elemento in canvas4parte2.Children)
             {
                 elemento.Visibility = Visibility.Collapsed;
@@ -233,6 +242,14 @@ namespace TelaMain
 
         private void CarregarButtonProxima(object sender, RoutedEventArgs e)
         {
+            PaginaAtual = 2;
+            if(BancoAtualPaginas != "Pagina2"){canvas6.Children.Clear();}
+
+            foreach (UIElement elemento in canvas6.Children)
+            {
+                elemento.Visibility = Visibility.Visible;
+            }
+
             foreach (UIElement elemento in canvas4.Children)
             {
                 elemento.Visibility = Visibility.Collapsed;
@@ -245,6 +262,8 @@ namespace TelaMain
         }
         private void CarregarButtonAnterior(object sender, RoutedEventArgs e)
         {
+            PaginaAtual = 1;
+            if(BancoAtualPaginas == "Pagina2"){canvas6.Children.Clear();}
             foreach (UIElement elemento in canvas4parte2.Children)
             {
                 elemento.Visibility = Visibility.Collapsed;
@@ -254,6 +273,7 @@ namespace TelaMain
             {
                 elemento.Visibility = Visibility.Visible;
             }
+            BancosTelaInicial();
         }
 
         private void RadioButtonBancos_MouseRight(object sender, MouseButtonEventArgs e, string NameDoBanco)
@@ -447,21 +467,47 @@ namespace TelaMain
 
         private void BancosTelaInicial()
         {
+            Canvas canvas4 = FindName("canvas4") as Canvas;
+            Canvas canvas4parte2 = FindName("canvas4parte2") as Canvas;
+            PaginaAtual = 1;
             canvas6.Children.Clear();
             canvas5.Children.Clear();
+            canvas4parte2.Children.Clear();
             string DiretorioDeExecução = Directory.GetCurrentDirectory();
             string DiretorioRaiz = Path.Combine(DiretorioDeExecução, "..");
             string CaminhoDaDados = Path.Combine(DiretorioRaiz, "dados");
             string[] subpastas = Directory.GetDirectories(CaminhoDaDados);
             string versaoDP = PegaVersaoDP();
-
-            Canvas canvas4 = FindName("canvas4") as Canvas;
-            Canvas canvas4parte2 = FindName("canvas4parte2") as Canvas;
+            
             int largura = 40;
             int altura = 155;
             int rest = 0;
             int stop = 0;
             int Qdado = 0;
+
+            string ConfigBancoStatus = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+            Shapes.Rectangle BancoAtualDesc = new Shapes.Rectangle();
+            BancoAtualDesc.Fill = Brushes.White;
+            BancoAtualDesc.Width = 250;
+            BancoAtualDesc.Height = 20;
+
+            TextBlock textBancoAtualDesc = new TextBlock();
+            string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+            string bancoAtualStatus = File.ReadAllText(ConfigBancoStatus);
+            if(bancoAtualStatus.Trim() == ""){bancoAtualStatus = "Nenhum";}
+            textBancoAtualDesc.Text = "Banco Atual: " + bancoAtualStatus;
+            textBancoAtualDesc.Foreground = Brushes.Black;
+            textBancoAtualDesc.FontWeight = FontWeights.Bold;
+
+            Canvas.SetLeft(textBancoAtualDesc, 460);
+            Canvas.SetTop(textBancoAtualDesc, 70);
+
+            Canvas.SetLeft(BancoAtualDesc, 460);
+            Canvas.SetTop(BancoAtualDesc, 70);
+
+            canvas3.Children.Add(BancoAtualDesc);
+            canvas3.Children.Add(textBancoAtualDesc);
+            
             for (int i = 0; i < subpastas.Length; i++)
             {
                 stop++;
@@ -504,60 +550,28 @@ namespace TelaMain
                 else { statusBanco.Fill = Brushes.Green; }
                 if (VersaoBanco == "Pasta Vazia!") { statusBanco.Fill = Brushes.Black; }
 
-                string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
-                BancoAtual = File.ReadAllText(ConfigBanco);
-                if (BancoAtual.Trim() == NameDoBanco.Trim())
-                {
-                    Shapes.Rectangle statusBancoAtual = new Shapes.Rectangle();
-                    statusBancoAtual.Fill = Brushes.Purple;
-                    statusBancoAtual.Width = 210;
-                    statusBancoAtual.Height = 5;
-
-                    Canvas.SetLeft(statusBancoAtual, largura);
-                    Canvas.SetTop(statusBancoAtual, altura-3);
-                    canvas6.Children.Add(statusBancoAtual);
-                }
-
                 Canvas.SetLeft(statusBanco, largura);
                 Canvas.SetTop(statusBanco, altura + 18);
 
                 Canvas.SetLeft(textBlock, largura);
                 Canvas.SetTop(textBlock, altura + 18);
+                
+                if(Qdado < 25)
+                {
+                    BancoAtual = File.ReadAllText(ConfigBanco);
+                    if (BancoAtual.Trim() == NameDoBanco.Trim())
+                    {
+                        BancoAtualPaginas = "Pagina1";
+                        Shapes.Rectangle statusBancoAtual = new Shapes.Rectangle();
+                        statusBancoAtual.Fill = Brushes.Purple;
+                        statusBancoAtual.Width = 210;
+                        statusBancoAtual.Height = 5;
 
-                RadioButton radioButtonBancosCopy = new RadioButton();
-                radioButtonBancosCopy.Background = Brushes.White;
-                radioButtonBancosCopy.Content = NameDoBanco;
-                radioButtonBancosCopy.Width = 210;
-                radioButtonBancosCopy.Foreground = Brushes.Black;
-                radioButtonBancosCopy.FontWeight = FontWeights.Bold;
-                radioButtonBancosCopy.Checked += RadioButtonBancos_Checked;
-
-                Border borderCopy = new Border();
-                borderCopy.Background = border.Background;
-                borderCopy.BorderThickness = border.BorderThickness;
-                borderCopy.Child = radioButtonBancosCopy;
-                borderCopy.Visibility = border.Visibility;
-
-                Shapes.Rectangle statusBancoCopy = new Shapes.Rectangle();
-                statusBancoCopy.Fill = statusBanco.Fill;
-                statusBancoCopy.Width = statusBanco.Width;
-                statusBancoCopy.Height = statusBanco.Height;
-                statusBancoCopy.Visibility = statusBanco.Visibility;
-
-                TextBlock textBlockCopy = new TextBlock();
-                textBlockCopy.Text = textBlock.Text;
-                textBlockCopy.Foreground = textBlock.Foreground;
-                textBlockCopy.FontWeight = textBlock.FontWeight;
-                textBlockCopy.Visibility = textBlock.Visibility;
-
-                Canvas.SetLeft(borderCopy, largura - 3);
-                Canvas.SetTop(borderCopy, altura);
-
-                Canvas.SetLeft(statusBancoCopy, largura);
-                Canvas.SetTop(statusBancoCopy, altura + 18);
-
-                Canvas.SetLeft(textBlockCopy, largura);
-                Canvas.SetTop(textBlockCopy, altura + 18);
+                        Canvas.SetLeft(statusBancoAtual, largura);
+                        Canvas.SetTop(statusBancoAtual, altura-3);
+                        canvas6.Children.Add(statusBancoAtual);
+                    }
+                }
 
                 largura += 220;
                 if (rest == 5)
@@ -567,15 +581,74 @@ namespace TelaMain
                     largura = 40;
                 }
 
-                if (stop <= 30)
+                if (stop <= 25)
                 {
                     canvas4.Children.Add(border);
                     canvas4.Children.Add(statusBanco);
                     canvas4.Children.Add(textBlock);
                 }
-                if (stop == 30) { altura = 155; }
-                if (stop <= 60)
+                if (stop == 25)
                 {
+                    largura -= 220;
+                    altura = 155; 
+                    rest -= 1;
+                }
+
+                if (stop <= 50 && stop > 25)
+                {
+                    RadioButton radioButtonBancosCopy = new RadioButton();
+                    radioButtonBancosCopy.Background = Brushes.White;
+                    radioButtonBancosCopy.Content = NameDoBanco;
+                    radioButtonBancosCopy.Width = 210;
+                    radioButtonBancosCopy.Foreground = Brushes.Black;
+                    radioButtonBancosCopy.FontWeight = FontWeights.Bold;
+                    radioButtonBancosCopy.Checked += RadioButtonBancos_Checked;
+                    radioButtonBancosCopy.PreviewMouseRightButtonDown += (sender, e) =>
+                    {
+                        RadioButtonBancos_MouseRight(sender, e, NameDoBanco);
+                    };
+
+                    Border borderCopy = new Border();
+                    borderCopy.Background = border.Background;
+                    borderCopy.BorderThickness = border.BorderThickness;
+                    borderCopy.Child = radioButtonBancosCopy;
+                    borderCopy.Visibility = border.Visibility;
+
+                    Shapes.Rectangle statusBancoCopy = new Shapes.Rectangle();
+                    statusBancoCopy.Fill = statusBanco.Fill;
+                    statusBancoCopy.Width = statusBanco.Width;
+                    statusBancoCopy.Height = statusBanco.Height;
+                    statusBancoCopy.Visibility = statusBanco.Visibility;
+
+                    TextBlock textBlockCopy = new TextBlock();
+                    textBlockCopy.Text = textBlock.Text;
+                    textBlockCopy.Foreground = textBlock.Foreground;
+                    textBlockCopy.FontWeight = textBlock.FontWeight;
+                    textBlockCopy.Visibility = textBlock.Visibility;
+
+                    Canvas.SetLeft(borderCopy, largura - 3);
+                    Canvas.SetTop(borderCopy, altura);
+
+                    Canvas.SetLeft(statusBancoCopy, largura);
+                    Canvas.SetTop(statusBancoCopy, altura + 18);
+
+                    Canvas.SetLeft(textBlockCopy, largura);
+                    Canvas.SetTop(textBlockCopy, altura + 18);
+
+                    BancoAtual = File.ReadAllText(ConfigBanco);
+                    if (BancoAtual.Trim() == NameDoBanco.Trim())
+                    {
+                        BancoAtualPaginas = "Pagina2";
+                        Shapes.Rectangle statusBancoAtual = new Shapes.Rectangle();
+                        statusBancoAtual.Fill = Brushes.Purple;
+                        statusBancoAtual.Width = 210;
+                        statusBancoAtual.Height = 5;
+
+                        Canvas.SetLeft(statusBancoAtual, largura);
+                        Canvas.SetTop(statusBancoAtual, altura-3);
+                        canvas6.Children.Add(statusBancoAtual);
+                    }
+
                     borderCopy.Visibility = Visibility.Collapsed;
                     statusBancoCopy.Visibility = Visibility.Collapsed;
                     textBlockCopy.Visibility = Visibility.Collapsed;
@@ -584,7 +657,10 @@ namespace TelaMain
                     canvas4parte2.Children.Add(statusBancoCopy);
                     canvas4parte2.Children.Add(textBlockCopy);
                 }
+
                 Qdado++;
+                if(Qdado > 25){paginas();}
+
                 var statusBar = new StatusBar();
                 statusBar.Height = 30;
                 statusBar.Width = 1200;
@@ -594,20 +670,39 @@ namespace TelaMain
                 statusBarItem.HorizontalAlignment = HorizontalAlignment.Stretch;
 
                 var DescRodape = new TextBlock();
-                DescRodape.Text = "Total de bancos de Dados: " + Qdado;
+                int BancosNaoAdicionados;
+                if(Qdado < subpastas.Length ) 
+                {
+                    BancosNaoAdicionados = subpastas.Length - Qdado;
+                    DescRodape.Text = "Total de bancos de Dados: " + subpastas.Length + "/50 Max" +" | Bancos não adicionados: " + BancosNaoAdicionados; 
+                }
+                else{DescRodape.Text = "Total de bancos de Dados: " + subpastas.Length + "/50 Max";}
                 DescRodape.Foreground = Brushes.Black;
                 DescRodape.FontWeight = FontWeights.Bold;
-                DescRodape.FontSize = 20;
+                DescRodape.FontSize = 15;//
 
                 statusBarItem.Content = DescRodape;
                 statusBar.Items.Add(statusBarItem);
                 Rodape.Children.Add(statusBar);
 
-
                 Canvas.SetLeft(statusBar, 0);
                 Canvas.SetTop(statusBar, 580);
-                if (stop == 60) { break; }
+                if (stop == 50) { break; }
 
+            }
+            if (PaginaAtual == 1)
+            {
+                if(BancoAtualPaginas == "Pagina2")
+                {
+                    foreach (UIElement elemento in canvas6.Children)
+                    {
+                        elemento.Visibility = Visibility.Collapsed;
+                    }
+                }
+            }
+            if (PaginaAtual == 2)
+            {
+                if(BancoAtualPaginas != "Pagina2"){canvas6.Children.Clear();}
             }
         }
 
@@ -1286,14 +1381,14 @@ EMPRESA=1";
                             string DiretorioDeExecuçãoDados = Directory.GetCurrentDirectory();
                             string diretorioPaiDados = Path.Combine(DiretorioDeExecuçãoDados, "..");
                             string pastaDados = Path.Combine(diretorioPaiDados, "dados");
-                            if (j > 1) { pastaComBanco = Path.Combine(pastaDados, (string)RadioButtonBanco.Content, "dados0" + i + ".fdb"); }
+                            if (j > 1) { pastaComBanco = Path.Combine(pastaDados, (string)RadioButtonBanco.Content, "dados0" + j + ".fdb"); }
                             else { pastaComBanco = Path.Combine(pastaDados, (string)RadioButtonBanco.Content, "dados.fdb"); }
                             string dsnName = "RENOVARFB0" + i;
                             string driverName = "Firebird/InterBase(r) driver";
                             string databasePath = pastaComBanco;
                             string username = "SYSDBA";
                             string password = "masterkey";
-                            string Descrição = "Dados0" + i;
+                            string Descrição = "Dados0" + j;
                             string Client = "C:\\Program Files (x86)\\Firebird\\Firebird_3_0\\fbclient.dll";
                             string dsnConnectionString = $"DRIVER={{{driverName}}};DBNAME={databasePath};UID={username};PWD={password};";
                             if (Registry.CurrentUser.OpenSubKey("Software\\ODBC\\ODBC.INI\\ODBC Data Sources") == null)
@@ -1426,41 +1521,6 @@ EMPRESA=1";
                         Canvas.SetLeft(textBlock, largura);
                         Canvas.SetTop(textBlock, altura + 18);
 
-                        RadioButton radioButtonBancosCopy = new RadioButton();
-                        radioButtonBancosCopy.Background = Brushes.White;
-                        radioButtonBancosCopy.Content = NameDoBanco;
-                        radioButtonBancosCopy.Width = 210;
-                        radioButtonBancosCopy.Foreground = Brushes.Black;
-                        radioButtonBancosCopy.FontWeight = FontWeights.Bold;
-                        radioButtonBancosCopy.Checked += RadioButtonBancos_Checked;
-
-                        Border borderCopy = new Border();
-                        borderCopy.Background = border.Background;
-                        borderCopy.BorderThickness = border.BorderThickness;
-                        borderCopy.Child = radioButtonBancosCopy;
-                        borderCopy.Visibility = border.Visibility;
-
-                        Shapes.Rectangle statusBancoCopy = new Shapes.Rectangle();
-                        statusBancoCopy.Fill = statusBanco.Fill;
-                        statusBancoCopy.Width = statusBanco.Width;
-                        statusBancoCopy.Height = statusBanco.Height;
-                        statusBancoCopy.Visibility = statusBanco.Visibility;
-
-                        TextBlock textBlockCopy = new TextBlock();
-                        textBlockCopy.Text = textBlock.Text;
-                        textBlockCopy.Foreground = textBlock.Foreground;
-                        textBlockCopy.FontWeight = textBlock.FontWeight;
-                        textBlockCopy.Visibility = textBlock.Visibility;
-
-                        Canvas.SetLeft(borderCopy, largura - 3);
-                        Canvas.SetTop(borderCopy, altura);
-
-                        Canvas.SetLeft(statusBancoCopy, largura);
-                        Canvas.SetTop(statusBancoCopy, altura + 18);
-
-                        Canvas.SetLeft(textBlockCopy, largura);
-                        Canvas.SetTop(textBlockCopy, altura + 18);
-
                         largura += 220;
                         if (rest == 5)
                         {
@@ -1468,16 +1528,53 @@ EMPRESA=1";
                             altura += 65;
                             largura = 40;
                         }
-
-                        if (stop <= 30)
+                        if (stop <= 25)
                         {
                             canvas4.Children.Add(border);
                             canvas4.Children.Add(statusBanco);
                             canvas4.Children.Add(textBlock);
                         }
-                        if (stop == 30) { altura = 155; }
-                        if (stop <= 60)
+                        if (stop == 25) { altura = 155; }
+                        if (stop <= 50 && stop >= 25)
                         {
+                            RadioButton radioButtonBancosCopy = new RadioButton();
+                            radioButtonBancosCopy.Background = Brushes.White;
+                            radioButtonBancosCopy.Content = NameDoBanco;
+                            radioButtonBancosCopy.Width = 210;
+                            radioButtonBancosCopy.Foreground = Brushes.Black;
+                            radioButtonBancosCopy.FontWeight = FontWeights.Bold;
+                            radioButtonBancosCopy.Checked += RadioButtonBancos_Checked;
+                            radioButtonBancosCopy.PreviewMouseRightButtonDown += (sender, e) =>
+                            {
+                                RadioButtonBancos_MouseRight(sender, e, NameDoBanco);
+                            };
+                            Border borderCopy = new Border();
+                            borderCopy.Background = border.Background;
+                            borderCopy.BorderThickness = border.BorderThickness;
+                            borderCopy.Child = radioButtonBancosCopy;
+                            borderCopy.Visibility = border.Visibility;
+
+                            Shapes.Rectangle statusBancoCopy = new Shapes.Rectangle();
+                            statusBancoCopy.Fill = statusBanco.Fill;
+                            statusBancoCopy.Width = statusBanco.Width;
+                            statusBancoCopy.Height = statusBanco.Height;
+                            statusBancoCopy.Visibility = statusBanco.Visibility;
+
+                            TextBlock textBlockCopy = new TextBlock();
+                            textBlockCopy.Text = textBlock.Text;
+                            textBlockCopy.Foreground = textBlock.Foreground;
+                            textBlockCopy.FontWeight = textBlock.FontWeight;
+                            textBlockCopy.Visibility = textBlock.Visibility;
+
+                            Canvas.SetLeft(borderCopy, largura - 3);
+                            Canvas.SetTop(borderCopy, altura);
+
+                            Canvas.SetLeft(statusBancoCopy, largura);
+                            Canvas.SetTop(statusBancoCopy, altura + 18);
+
+                            Canvas.SetLeft(textBlockCopy, largura);
+                            Canvas.SetTop(textBlockCopy, altura + 18);
+
                             borderCopy.Visibility = Visibility.Collapsed;
                             statusBancoCopy.Visibility = Visibility.Collapsed;
                             textBlockCopy.Visibility = Visibility.Collapsed;
@@ -1489,147 +1586,7 @@ EMPRESA=1";
                         if (stop == 60) { break; }
                     }
                 }
-            }
-            else
-            {
-                canvas6.Children.Clear();
-                canvas4.Children.Clear();
-                canvas4parte2.Children.Clear();
-
-                string DiretorioDeExecução = Directory.GetCurrentDirectory();
-                string diretorioPai = Path.Combine(DiretorioDeExecução, "..");
-                string pastaProcurada = Path.Combine(diretorioPai, "dados");
-                string[] subpastas = Directory.GetDirectories(pastaProcurada);
-
-                for (int i = 0; i < subpastas.Length; i++)
-                {
-                    stop++;
-                    rest++;
-                    string Caminho = subpastas[i];
-                    string NameDoBanco = Path.GetFileName(Caminho);
-
-                    RadioButton radioButtonBancos = new RadioButton();
-                    radioButtonBancos.Background = Brushes.White;
-                    radioButtonBancos.Content = NameDoBanco;
-                    radioButtonBancos.Width = 210;
-                    radioButtonBancos.Foreground = Brushes.Black;
-                    radioButtonBancos.FontWeight = FontWeights.Bold;
-                    radioButtonBancos.Checked += RadioButtonBancos_Checked;
-                    radioButtonBancos.PreviewMouseRightButtonDown += (sender, e) =>
-                    {
-                        RadioButtonBancos_MouseRight(sender, e, NameDoBanco);
-                    };
-
-                    Border border = new Border();
-                    border.Background = Brushes.White;
-                    border.BorderThickness = new Thickness(3);
-                    border.Child = radioButtonBancos;
-
-                    Shapes.Rectangle statusBanco = new Shapes.Rectangle();
-                    statusBanco.Fill = Brushes.Green;
-                    statusBanco.Width = 210;
-                    statusBanco.Height = 20;
-
-                    TextBlock textBlock = new TextBlock();
-                    VersaoBanco = PegaVersao(NameDoBanco);
-                    textBlock.Text = "Versão do Banco: " + VersaoBanco;
-                    textBlock.Foreground = Brushes.White;
-                    textBlock.FontWeight = FontWeights.Bold;
-
-                    if (VersaoBanco != versaoDP) { statusBanco.Fill = Brushes.Red; }
-                    else { statusBanco.Fill = Brushes.Green; }
-                    if (VersaoBanco == "Pasta Vazia!") { statusBanco.Fill = Brushes.Black; }
-
-                    string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
-                    BancoAtual = File.ReadAllText(ConfigBanco);
-                    if (BancoAtual.Trim() == NameDoBanco.Trim())
-                    {
-                        Shapes.Rectangle statusBancoAtual = new Shapes.Rectangle();
-                        statusBancoAtual.Fill = Brushes.Purple;
-                        statusBancoAtual.Width = 210;
-                        statusBancoAtual.Height = 5;
-
-                        Canvas.SetLeft(statusBancoAtual, largura);
-                        Canvas.SetTop(statusBancoAtual, altura-3);
-                        canvas6.Children.Add(statusBancoAtual);
-                    }
-
-                    Canvas.SetLeft(border, largura - 3);
-                    Canvas.SetTop(border, altura);
-
-                    Canvas.SetLeft(statusBanco, largura);
-                    Canvas.SetTop(statusBanco, altura + 18);
-
-                    Canvas.SetLeft(textBlock, largura);
-                    Canvas.SetTop(textBlock, altura + 18);
-
-                    RadioButton radioButtonBancosCopy = new RadioButton();
-                    radioButtonBancosCopy.Background = Brushes.White;
-                    radioButtonBancosCopy.Content = NameDoBanco;
-                    radioButtonBancosCopy.Width = 210;
-                    radioButtonBancosCopy.Foreground = Brushes.Black;
-                    radioButtonBancosCopy.FontWeight = FontWeights.Bold;
-                    radioButtonBancosCopy.Checked += RadioButtonBancos_Checked;
-
-                    Border borderCopy = new Border();
-                    borderCopy.Background = border.Background;
-                    borderCopy.BorderThickness = border.BorderThickness;
-                    borderCopy.Child = radioButtonBancosCopy;
-                    borderCopy.Visibility = border.Visibility;
-
-                    Shapes.Rectangle statusBancoCopy = new Shapes.Rectangle();
-                    statusBancoCopy.Fill = statusBanco.Fill;
-                    statusBancoCopy.Width = statusBanco.Width;
-                    statusBancoCopy.Height = statusBanco.Height;
-                    statusBancoCopy.Visibility = statusBanco.Visibility;
-
-                    TextBlock textBlockCopy = new TextBlock();
-                    textBlockCopy.Text = textBlock.Text;
-                    textBlockCopy.Foreground = textBlock.Foreground;
-                    textBlockCopy.FontWeight = textBlock.FontWeight;
-                    textBlockCopy.Visibility = textBlock.Visibility;
-
-                    Canvas.SetLeft(borderCopy, largura - 3);
-                    Canvas.SetTop(borderCopy, altura);
-
-                    Canvas.SetLeft(statusBancoCopy, largura);
-                    Canvas.SetTop(statusBancoCopy, altura + 18);
-
-                    Canvas.SetLeft(textBlockCopy, largura);
-                    Canvas.SetTop(textBlockCopy, altura + 18);
-
-                    largura += 220;
-                    if (rest == 5)
-                    {
-                        rest = 0;
-                        altura += 65;
-                        largura = 40;
-                    }
-
-                    if (stop <= 30)
-                    {
-                        canvas4.Children.Add(border);
-                        canvas4.Children.Add(statusBanco);
-                        canvas4.Children.Add(textBlock);
-                    }
-                    if (stop == 30) { altura = 155; }
-                    if (stop <= 60)
-                    {
-                        borderCopy.Visibility = Visibility.Collapsed;
-                        statusBancoCopy.Visibility = Visibility.Collapsed;
-                        textBlockCopy.Visibility = Visibility.Collapsed;
-
-                        canvas4parte2.Children.Add(borderCopy);
-                        canvas4parte2.Children.Add(statusBancoCopy);
-                        canvas4parte2.Children.Add(textBlockCopy);
-                    }
-                    if (stop == 60) { break; }
-                }
-            }
-
-
+            }else{BancosTelaInicial();}
         }
-
-
     }
 }
