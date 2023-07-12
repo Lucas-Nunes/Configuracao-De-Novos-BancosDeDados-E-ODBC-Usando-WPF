@@ -10,13 +10,14 @@
     <Grid>
         <Grid x:Name="body">
             <Canvas x:Name="canvas1">
-                <TextBox Width="1100" Height="30" 
+                <TextBox Width="1100" Height="30" x:Name="text1" 
                              Canvas.Left="30" Canvas.Top="30" 
                              Text="Filtrar por nome" 
                              FontSize="20" FontWeight="Bold" 
                              BorderBrush="Black" BorderThickness="1"
                              KeyDown="SearchTextBox_KeyDown"
                              TextChanged = "VerificarTexto"
+						     PreviewMouseDown = "VerificarTextoHint"
 						     PreviewMouseLeftButtonDown="RadioButtonMouseRightClear"
                 />
             </Canvas>

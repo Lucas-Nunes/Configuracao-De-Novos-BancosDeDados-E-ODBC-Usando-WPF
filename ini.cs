@@ -49,7 +49,7 @@ namespace TelaMain
 
         private void SetWindowSize()
         {
-            ResizeMode = ResizeMode.NoResize;
+            ResizeMode = ResizeMode.CanMinimize;
             MaxWidth = 1200;
             MaxHeight = 650;
         }
@@ -192,6 +192,16 @@ namespace TelaMain
                     }
                 }
                 catch (Exception E) { MessageBox.Show("Erro ao gravar banco atual:\n\n" + "Erro:\n" + E.Message); }
+            }
+        }
+
+        private void VerificarTextoHint(object sender, MouseButtonEventArgs e)
+        {
+            TextBox textbox = FindName("text1") as TextBox;
+            string texto = canvas1.Children.OfType<TextBox>().FirstOrDefault()?.Text;
+            if (texto.Length > 0)
+            {
+                textbox.Text = string.Empty;
             }
         }
 
@@ -354,6 +364,21 @@ namespace TelaMain
                     Directory.Move(CaminhoDoBanco, CaminhoDoBancoNomeNovo);
 
                     MessageBox.Show("Banco renomeado com sucesso!");
+
+                    string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+                    string bancoAtualStatus = File.ReadAllText(ConfigBanco);
+                    if (bancoAtualStatus.Trim() == NameDoBanco.Trim())
+                    {
+                        try
+                        {
+                            using (StreamWriter arquivo = File.CreateText(ConfigBanco))
+                            {
+                                arquivo.WriteLine(" ");
+                            }
+                        }
+                        catch (Exception E) { MessageBox.Show("Erro ao remover banco atual:\n\n" + "Erro:\n" + E.Message); }
+                    }
+
                     BancosTelaInicial();
                 }
                 catch (Exception ex)
@@ -390,6 +415,21 @@ namespace TelaMain
                     {
                         Directory.Delete(Banco, true);
                         MessageBox.Show("Banco excluído com sucesso!");
+
+                        string ConfigBanco = Path.Combine(DiretorioDeExecução, "BancoAtual.txt");
+                        string bancoAtualStatus = File.ReadAllText(ConfigBanco);
+                        if (bancoAtualStatus.Trim() == NameDoBanco.Trim())
+                        {
+                            try
+                            {
+                                using (StreamWriter arquivo = File.CreateText(ConfigBanco))
+                                {
+                                    arquivo.WriteLine(" ");
+                                }
+                            }
+                            catch (Exception E) { MessageBox.Show("Erro ao remover banco atual:\n\n" + "Erro:\n" + E.Message); }
+                        }
+
                         canvas4.Children.Clear();
                         canvas4parte2.Children.Clear();
                         BancosTelaInicial();
@@ -469,6 +509,7 @@ namespace TelaMain
         {
             Canvas canvas4 = FindName("canvas4") as Canvas;
             Canvas canvas4parte2 = FindName("canvas4parte2") as Canvas;
+
             PaginaAtual = 1;
             canvas6.Children.Clear();
             canvas5.Children.Clear();
@@ -1345,6 +1386,8 @@ EMPRESA=1";
         private void RadioButtonBancos_Checked(object sender, RoutedEventArgs e)
         {
             RadioButton RadioButtonBanco = (RadioButton)sender;
+            TextBox textbox = FindName("text1") as TextBox;
+            textbox.Text = "Filtrar por nome";
             if (RadioButtonBanco.IsChecked == true)
             {
                 int i = 0;
